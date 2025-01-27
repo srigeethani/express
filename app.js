@@ -31,90 +31,86 @@
 //     console.log(`Server is running on http://localhost:${port}`);
 // });
 
- const express = require("express");
- const mongoose=require("mongoose")
- const app = express();
+const express = require("express");
+const mongoose = require("mongoose")
+const app = express();
 const port = 3000;
 
 app.use(express.json())
 
-const mongourl="mongodb://localhost:27017/local"
+
+
+const mongourl = "mongodb+srv://srigeethani:srigeethani@cluster0.hcv6mqf.mongodb.net/ExpenseTracker"
 mongoose.connect(mongourl)
-.then(() => {
-    console.log("connected to database");
-    app.listen(port,()=>{
-        console.log(`server is running on http://localhost:${port}`)
+    .then(() => {
+        console.log("connected to database");
+        app.listen(port, () => {
+            console.log(`server is running on http://localhost:${port}`)
+        })
     })
-})
-.catch((err) => {
-    console.log("error connecting to database", err);
+    .catch((err) => {
+        console.log("error connecting to database", err);
     });
-const expenseSchema=new mongoose.Schema({
-    id:{type:String,required:true,unique:true},
-    title:{type:String,required:true},
-    amount:{type:Number,required:true},
+const expenseSchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true },
+    title: { type: String, required: true },
+    amount: { type: Number, required: true },
 })
-const expensemodel=mongoose.model("expense",expenseSchema);
-app.get("/api/expense",async(req,res)=>{
-    try{
-        const expense=await expensemodel.find();
+const expensemodel = mongoose.model("expense", expenseSchema);
+app.get("/api/expense", async (req, res) => {
+    try {
+        const expense = await expensemodel.find();
         res.status(200).json(expense);
-    }catch(error){
-            res.status(500).json({error:"failed to connect"})
-            
-        }
-    });
+    } catch (error) {
+        res.status(500).json({ error: "failed to connect" })
 
-    const{v4:uuidv4}=require("uuid");
-    app.post("/api/expense",async(req,res)=>{
-        let body="";
-        req.on("data",(chunk)=>{
-            body+=chunk;
-            });
-            req.on("end",async()=>{
-                const data =JSON.parse(body);
-                const newexpense=new expensemodel({
-                    id:uuidv4(),
-                    title:data.title,
-                    amount:data.amount,
-                });
-                const savedExpenses=await newexpense.save();
-                res.status(200).json(savedExpenses);
+    }
+});
 
-            });
+const { v4: uuidv4 } = require("uuid");
+app.post("/api/expense", async (req, res) => {
+    const { title, amount } = req.body
+    const newexpense = new expensemodel({
+        id: uuidv4(),
+        title: title,
+        amount: amount,
     });
+    const savedExpenses = await newexpense.save();
+    res.status(200).json(savedExpenses);
+
+});
 
 //update
-app.put("/api/expense/:id",async(req,res)=>{
-    const {id}=req.params;
-    const {title,amount}=req.body;
+app.put("/api/expense/:id", async (req, res) => {
+    const { id } = req.params;
+    const { title, amount } = req.body;
     console.log(title)
-    try{
-        const updatedExpense=await expensemodel.findOneAndUpdate(
-            {id},
-            {title,amount}
+    try {
+        const updatedExpense = await expensemodel.findOneAndUpdate(
+            { id },
+            { title, amount }
         )
-        if(updatedExpense){
-            return res.status(400).json({message:"Expense not found"});
+        if (updatedExpense) {
+            return res.status(400).json({ message: "Expense not found" });
         }
-        res.status(200).json({title,amount});
+        res.status(200).json({ title, amount });
     }
-    catch(error){
-        res.status(500).json({message:"Error in updating expense"});
-   }
+    catch (error) {
+        res.status(500).json({ message: "Error in updating expense" });
+    }
 })
 
 //delete
- app.delete("/api/expense/:id",async(req,res)=>{
-     const {id}=req.params;
-     try{
-         const deletedExpense=await expensemodel.findOneAndDelete(id);
-         if(!deletedExpense){
-             return res.status(400).json({message:"Expense not found"});
-             }
-             res.status(200).json({message:"Expense deleted successfully"});
-             }
-             catch(error){
-                 res.status(500).json({message:"Error in deleting expense"});
-                 }
+app.delete("/api/expense/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const deletedExpense = await expensemodel.findOneAndDelete(id);
+        if (!deletedExpense) {
+            return res.status(400).json({ message: "Expense not found" });
+        }
+        res.status(200).json({ message: "Expense deleted successfully" });
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error in deleting expense" });
+    }
 })
