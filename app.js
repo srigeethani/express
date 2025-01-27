@@ -82,7 +82,6 @@ app.get("/api/expense",async(req,res)=>{
                 res.status(200).json(savedExpenses);
 
             });
-
     });
 
 //update
@@ -103,4 +102,19 @@ app.put("/api/expense/:id",async(req,res)=>{
     catch(error){
         res.status(500).json({message:"Error in updating expense"});
    }
+})
+
+//delete
+ app.delete("/api/expense/:id",async(req,res)=>{
+     const {id}=req.params;
+     try{
+         const deletedExpense=await expensemodel.findOneAndDelete(id);
+         if(!deletedExpense){
+             return res.status(400).json({message:"Expense not found"});
+             }
+             res.status(200).json({message:"Expense deleted successfully"});
+             }
+             catch(error){
+                 res.status(500).json({message:"Error in deleting expense"});
+                 }
 })
